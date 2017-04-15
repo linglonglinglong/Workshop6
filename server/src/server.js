@@ -68,6 +68,7 @@ function getFeedData(user) {
   feedData.contents = feedData.contents.map(getFeedItemSync);
   // Return FeedData with resolved references.
   return feedData;
+
 }
 
 /**
