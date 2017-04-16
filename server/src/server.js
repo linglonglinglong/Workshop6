@@ -92,6 +92,7 @@ app.get('/user/:userid/feed', function(req, res) {
 });
 
 var StatusUpdateSchema = require('./schemas/statusupdate.json');
+var CommentSchema = require('./schemas/comment.json');
 var validate = require('express-jsonschema').validate;
 var writeDocument = database.writeDocument;
 var addDocument = database.addDocument;
@@ -313,6 +314,79 @@ app.post('/search', function(req, res) {
   } else {
     // 400: Bad Request.
     res.status(400).end();
+  }
+});
+
+function postComment(feedItemId, author, contents) {
+  var feedItem = readDocument('feedItems', feedItemId);
+  feedItem.comments.push({
+    "author": author,
+    "contents": contents,
+    "postDate": new Date().getTime(),
+    "likeCounter": []
+  });
+  writeDocument('feedItems', feedItem);
+  // Return a resolved version of the feed item.
+  getFeedItemSync(feedItemId);
+}
+
+//Post comment
+app.post('/feedItem/:feeditemid/comment', validate({ body: CommentSchema }), function(req, res) {
+  var body = req.body;
+  var fromUser = getUserIdFromToken(req.get('Authorization'));
+  var feedItemId = parseInt(req.params.feeditemid, 10);
+  var userId = parseInt(req.params.userid, 10);
+  if (fromUser === body.userId) {
+    var newComment = postComment(feedItemId, userId, body.contents)
+    res.status(201);
+    res.set('Location', '/feeditem/' + feedItemId + '/comment');
+    res.send(newComment);
+  }else{
+    // 401: Unauthorized.
+    res.status(401).end();
+  }
+});
+
+// Like comment.
+app.put('/feeditem/:feeditemid/comment/:commentIdx/likelist/:userid', function(req, res) {
+  var fromUser = getUserIdFromToken(req.get('Authorization'));
+  // Convert params from string to number.
+  var feedItemId = parseInt(req.params.feeditemid, 10);
+  var userId = parseInt(req.params.userid, 10);
+  var commentIdx = parseInt(req.params.commentIdx, 10);
+  if (fromUser === userId) {
+    var feedItem = readDocument('feedItems', feedItemId);
+    var comment = feedItem.comments[commentIdx];
+    comment.likeCounter.push(userId);
+    writeDocument('feedItems', feedItem);
+    comment.author = readDocument('users', comment.author);
+    return comment;
+  } else {
+    // 401: Unauthorized.
+    res.status(401).end();
+  }
+});
+
+// Unlike a feed item.
+app.delete('/feeditem/:feeditemid/comment/:commentIdx/likelist/:userid', function(req, res) {
+  var fromUser = getUserIdFromToken(req.get('Authorization'));
+  // Convert params from string to number.
+  var feedItemId = parseInt(req.params.feeditemid, 10);
+  var userId = parseInt(req.params.userid, 10);
+  var commentIdx = parseInt(req.params.commentIdx, 10);
+  if (fromUser === userId) {
+    var feedItem = readDocument('feedItems', feedItemId);
+    var comment = feedItem.comments[commentIdx];
+    var userIndex = comment.likeCounter.indexOf(userId);
+    if (userIndex !== -1) {
+      comment.likeCounter.splice(userIndex, 1);
+      writeDocument('feedItems', feedItem);
+    }
+    comment.author = readDocument('users', comment.author);
+    return comment;
+  } else {
+    // 401: Unauthorized.
+    res.status(401).end();
   }
 });
 
