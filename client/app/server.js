@@ -91,7 +91,7 @@ export function unlikeFeedItem(feedItemId, userId, cb) {
  * Adds a 'like' to a comment.
  */
 export function likeComment(feedItemId, commentIdx, userId, cb) {
-  sendXHR('PUT', '/feeditem/' + feedItemId + '/comment/' + commentIdx + userId,
+  sendXHR('PUT', '/feeditem/' + feedItemId + '/comments/' + commentIdx + userId,
           undefined, (xhr) => {
     cb(JSON.parse(xhr.responseText));
   });
@@ -101,7 +101,7 @@ export function likeComment(feedItemId, commentIdx, userId, cb) {
  * Removes a 'like' from a comment.
  */
 export function unlikeComment(feedItemId, commentIdx, userId, cb) {
-  sendXHR('DELETE', '/feeditem/' + feedItemId + '/comment/' + commentIdx + '/likelist/' + userId, undefined, (xhr) => {
+  sendXHR('DELETE', '/feeditem/' + feedItemId + '/comments/' + commentIdx + '/likelist/' + userId, undefined, (xhr) => {
     cb(JSON.parse(xhr.responseText));
   });
 }

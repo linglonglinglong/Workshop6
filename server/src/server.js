@@ -327,20 +327,17 @@ function postComment(feedItemId, author, contents) {
   });
   writeDocument('feedItems', feedItem);
   // Return a resolved version of the feed item.
-  getFeedItemSync(feedItemId);
+  return feedItem;
 }
 
 //Post comment
 app.post('/feedItem/:feeditemid/comment', validate({ body: CommentSchema }), function(req, res) {
   var body = req.body;
   var fromUser = getUserIdFromToken(req.get('Authorization'));
-  var feedItemId = parseInt(req.params.feeditemid, 10);
-  var userId = parseInt(req.params.userid, 10);
   if (fromUser === body.userId) {
-    var newComment = postComment(feedItemId, userId, body.contents)
+    postComment(body.userId, body.contents, req.params.feeditemid);
     res.status(201);
-    res.set('Location', '/feeditem/' + feedItemId + '/comment');
-    res.send(newComment);
+    res.send(getFeedItemSync(req.params.feeditemid));
   }else{
     // 401: Unauthorized.
     res.status(401).end();
@@ -348,19 +345,20 @@ app.post('/feedItem/:feeditemid/comment', validate({ body: CommentSchema }), fun
 });
 
 // Like comment.
-app.put('/feeditem/:feeditemid/comment/:commentIdx/likelist/:userid', function(req, res) {
+app.put('/feeditem/:feeditemid/comments/:commentidx/likelist/:userid', function(req, res) {
   var fromUser = getUserIdFromToken(req.get('Authorization'));
   // Convert params from string to number.
   var feedItemId = parseInt(req.params.feeditemid, 10);
   var userId = parseInt(req.params.userid, 10);
-  var commentIdx = parseInt(req.params.commentIdx, 10);
   if (fromUser === userId) {
     var feedItem = readDocument('feedItems', feedItemId);
-    var comment = feedItem.comments[commentIdx];
-    comment.likeCounter.push(userId);
-    writeDocument('feedItems', feedItem);
-    comment.author = readDocument('users', comment.author);
-    return comment;
+    var comment = feedItem.comments[req.params.commentIdx];
+    if (comment.likeCounter.indexOf(userId) === -1) {
+            comment.likeCounter.push(userId);
+            writeDocument('feedItems', feedItem);
+        }
+        comment.author = readDocument('users', comment.author);
+        res.send(comment);
   } else {
     // 401: Unauthorized.
     res.status(401).end();
@@ -368,22 +366,21 @@ app.put('/feeditem/:feeditemid/comment/:commentIdx/likelist/:userid', function(r
 });
 
 // Unlike a feed item.
-app.delete('/feeditem/:feeditemid/comment/:commentIdx/likelist/:userid', function(req, res) {
+app.delete('/feeditem/:feeditemid/comments/:commentIdx/likelist/:userid', function(req, res) {
   var fromUser = getUserIdFromToken(req.get('Authorization'));
   // Convert params from string to number.
   var feedItemId = parseInt(req.params.feeditemid, 10);
   var userId = parseInt(req.params.userid, 10);
-  var commentIdx = parseInt(req.params.commentIdx, 10);
   if (fromUser === userId) {
     var feedItem = readDocument('feedItems', feedItemId);
-    var comment = feedItem.comments[commentIdx];
+    var comment = feedItem.comments[req.params.commentIdx];
     var userIndex = comment.likeCounter.indexOf(userId);
     if (userIndex !== -1) {
       comment.likeCounter.splice(userIndex, 1);
       writeDocument('feedItems', feedItem);
     }
     comment.author = readDocument('users', comment.author);
-    return comment;
+    res.send(comment);
   } else {
     // 401: Unauthorized.
     res.status(401).end();

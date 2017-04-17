@@ -1,26 +1,21 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "definitions": {},
+    "type": "object",
     "id": "/",
     "properties": {
         "contents": {
             "id": "/properties/contents",
             "type": "string"
         },
-        "feedItemId": {
-            "id": "/properties/feedItemId",
-            "type": "integer"
-        },
         "userId": {
             "id": "/properties/userId",
             "type": "integer"
         }
     },
-    "type": "object",
     "additionalProperties": false,
     "required": [
       "userId",
-      "feedItemId",
       "contents"
     ]
 }
