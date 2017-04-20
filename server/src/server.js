@@ -331,11 +331,11 @@ function postComment(feedItemId, author, contents) {
 }
 
 //Post comment
-app.post('/feedItem/:feeditemid/comment', validate({ body: CommentSchema }), function(req, res) {
+app.post('/feedItem/:feeditemid/comment/', validate({ body: CommentSchema }), function(req, res) {
   var body = req.body;
   var fromUser = getUserIdFromToken(req.get('Authorization'));
   if (fromUser === body.userId) {
-    postComment(body.userId, body.contents, req.params.feeditemid);
+    postComment(req.params.feeditemid, body.userId, body.contents);
     res.status(201);
     res.send(getFeedItemSync(req.params.feeditemid));
   }else{
@@ -352,7 +352,7 @@ app.put('/feeditem/:feeditemid/comments/:commentidx/likelist/:userid', function(
   var userId = parseInt(req.params.userid, 10);
   if (fromUser === userId) {
     var feedItem = readDocument('feedItems', feedItemId);
-    var comment = feedItem.comments[req.params.commentIdx];
+    var comment = feedItem.comments[req.params.commentidx];
     if (comment.likeCounter.indexOf(userId) === -1) {
             comment.likeCounter.push(userId);
             writeDocument('feedItems', feedItem);

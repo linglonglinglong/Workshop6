@@ -55,6 +55,7 @@ export function postStatusUpdate(user, location, contents, cb) {
 /**
  * Adds a new comment to the database on the given feed item.
  */
+ ///feedItem/:feeditemid/comments/:commentidx
 export function postComment(feedItemId, author, contents, cb) {
   sendXHR('POST', '/feeditem/' + feedItemId + '/comment', {
     userId: author,
@@ -91,7 +92,7 @@ export function unlikeFeedItem(feedItemId, userId, cb) {
  * Adds a 'like' to a comment.
  */
 export function likeComment(feedItemId, commentIdx, userId, cb) {
-  sendXHR('PUT', '/feeditem/' + feedItemId + '/comments/' + commentIdx + userId,
+  sendXHR('PUT', '/feeditem/' + feedItemId + '/comments/' + commentIdx + "/likelist/" + userId,
           undefined, (xhr) => {
     cb(JSON.parse(xhr.responseText));
   });
